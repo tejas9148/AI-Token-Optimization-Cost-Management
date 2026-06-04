@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     app_name: str = "AI Token Optimization & Cost Management Platform"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-flash-lite-latest"
+    database_url: str = ""
+    input_cost_per_million_tokens: float = 0.0
+    output_cost_per_million_tokens: float = 0.0
 
     model_config = SettingsConfigDict(
         env_file=".env",

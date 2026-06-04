@@ -25,8 +25,15 @@ Phase 1 of the project provides a FastAPI-based AI Gateway that accepts a prompt
    ```bash
    pip install -r requirements.txt
    ```
-3. Set `GEMINI_API_KEY` in `.env` and keep `GEMINI_MODEL=gemini-flash-lite-latest` as the free-tier-friendly default.
-4. Run the app:
+3. Configure your runtime values directly in `.env`.
+   - Keep `GEMINI_MODEL=gemini-flash-lite-latest` as the free-tier-friendly default.
+   - Set `DATABASE_URL`, `INPUT_COST_PER_MILLION_TOKENS`, and `OUTPUT_COST_PER_MILLION_TOKENS` there.
+4. Set `GEMINI_API_KEY` in `.env`.
+5. Run the initial migration:
+   ```bash
+   alembic upgrade head
+   ```
+6. Run the app:
    ```bash
    uvicorn app.main:app --reload
    ```
@@ -44,7 +51,13 @@ Phase 1 of the project provides a FastAPI-based AI Gateway that accepts a prompt
 ```json
 {
   "success": true,
+  "id": 1,
   "prompt": "Explain Docker",
-  "response": "AI generated response"
+  "response": "AI generated response",
+  "input_tokens": 3,
+  "output_tokens": 12,
+  "total_tokens": 15,
+  "estimated_cost": "0.000000",
+  "created_at": "2026-06-04T00:00:00Z"
 }
 ```

@@ -1,3 +1,6 @@
+from datetime import datetime
+from decimal import Decimal
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -21,5 +24,11 @@ class AskResponse(BaseModel):
     """Response payload returned by the /ask endpoint."""
 
     success: bool
+    id: int
     prompt: str
     response: str
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+    estimated_cost: Decimal
+    created_at: datetime

@@ -1,12 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.config.settings import get_settings
+from app.db.database import get_db
 from app.schemas.ask import AskRequest, AskResponse
+from app.services.ask_service import AskService
 from app.services.gemini_service import (
     GeminiApiError,
     GeminiNetworkError,
     GeminiQuotaError,
-    GeminiService,
     InvalidGeminiApiKeyError,
 )
 
@@ -14,15 +16,25 @@ router = APIRouter(prefix="", tags=["AI Gateway"])
 
 
 @router.post("/ask", response_model=AskResponse)
-def ask_question(payload: AskRequest) -> AskResponse:
+def ask_question(payload: AskRequest, db: Session = Depends(get_db)) -> AskResponse:
     """Accept a prompt, send it to Gemini, and return the generated response."""
 
     settings = get_settings()
 
     try:
-        service = GeminiService(settings=settings)
-        gemini_response = service.generate_response(payload.prompt)
-        return AskResponse(success=True, prompt=payload.prompt, response=gemini_response)
+        service = AskService(settings=settings, db=db)
+        ai_request = service.process_prompt(payload.prompt)
+        return AskResponse(
+            success=True,
+            id=ai_request.id,
+            prompt=ai_request.prompt,
+            response=ai_request.response,
+            input_tokens=ai_request.input_tokens,
+            output_tokens=ai_request.output_tokens,
+            total_tokens=ai_request.total_tokens,
+            estimated_cost=ai_request.estimated_cost,
+            created_at=ai_request.created_at,
+        )
     except InvalidGeminiApiKeyError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from google import genai
 
 from app.config.settings import Settings
+from app.utils.token_utils import estimate_token_count
 
 
 class GeminiServiceError(Exception):
@@ -67,3 +68,24 @@ class GeminiService:
             if "timeout" in error_message or "network" in error_message or "connection" in error_message:
                 raise GeminiNetworkError("A network error occurred while calling Gemini.") from exc
             raise GeminiApiError("Gemini API returned an unexpected error.") from exc
+
+    def count_tokens(self, text: str) -> int:
+        """Count tokens with Gemini's tokenizer, falling back to a local estimate if needed."""
+
+        normalized_text = text.strip()
+        if not normalized_text:
+            return 0
+
+        try:
+            response = self._client.models.count_tokens(
+                model=self.settings.gemini_model,
+                contents=normalized_text,
+            )
+            total_tokens = getattr(response, "total_tokens", None)
+            if total_tokens is None:
+                raise GeminiApiError("Gemini returned an invalid token count response.")
+            return int(total_tokens)
+        except GeminiServiceError:
+            raise
+        except Exception:
+            return estimate_token_count(normalized_text)
