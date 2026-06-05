@@ -11,3 +11,7 @@ class AnalyticsResponse(BaseModel):
     total_output_tokens: int
     total_tokens: int
     total_estimated_cost: Decimal
+    total_cache_hits: int
+    total_cache_misses: int
+    cache_hit_rate: float
+    estimated_requests_saved: int

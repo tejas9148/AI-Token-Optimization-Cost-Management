@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     database_url: str = ""
     input_cost_per_million_tokens: float = 0.0
     output_cost_per_million_tokens: float = 0.0
+    redis_url: str = ""
+    cache_ttl_seconds: int = 3600
 
     model_config = SettingsConfigDict(
         env_file=".env",

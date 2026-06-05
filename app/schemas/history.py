@@ -16,6 +16,7 @@ class HistoryItem(BaseModel):
     output_tokens: int
     total_tokens: int
     estimated_cost: Decimal
+    served_from_cache: bool
     created_at: datetime
 
 

@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import Integer, func
 
 from app.models.ai_request import AIRequest
 
@@ -15,6 +15,7 @@ def create_ai_request(
     output_tokens: int,
     total_tokens: int,
     estimated_cost,
+    served_from_cache: bool,
 ) -> AIRequest:
     """Persist a Gemini request record and return the stored row."""
 
@@ -25,6 +26,7 @@ def create_ai_request(
         output_tokens=output_tokens,
         total_tokens=total_tokens,
         estimated_cost=estimated_cost,
+        served_from_cache=served_from_cache,
     )
     db.add(ai_request)
     db.commit()
@@ -50,23 +52,33 @@ def count_ai_requests(db: Session) -> int:
     return db.query(AIRequest).count()
 
 
-def get_ai_request_analytics(db: Session) -> dict[str, int | Decimal]:
+def get_ai_request_analytics(db: Session) -> dict[str, int | Decimal | float]:
     """Return aggregate usage and cost metrics for stored AI requests."""
 
-    total_requests, total_input_tokens, total_output_tokens, total_tokens, total_estimated_cost = (
+    total_requests, total_input_tokens, total_output_tokens, total_tokens, total_estimated_cost, total_cache_hits = (
         db.query(
             func.count(AIRequest.id),
             func.coalesce(func.sum(AIRequest.input_tokens), 0),
             func.coalesce(func.sum(AIRequest.output_tokens), 0),
             func.coalesce(func.sum(AIRequest.total_tokens), 0),
             func.coalesce(func.sum(AIRequest.estimated_cost), 0),
+            func.coalesce(func.sum(func.cast(AIRequest.served_from_cache, Integer)), 0),
         ).one()
     )
 
+    total_requests_int = int(total_requests)
+    total_cache_hits_int = int(total_cache_hits)
+    total_cache_misses_int = total_requests_int - total_cache_hits_int
+    cache_hit_rate = (total_cache_hits_int / total_requests_int) if total_requests_int else 0.0
+
     return {
-        "total_requests": int(total_requests),
+        "total_requests": total_requests_int,
         "total_input_tokens": int(total_input_tokens),
         "total_output_tokens": int(total_output_tokens),
         "total_tokens": int(total_tokens),
         "total_estimated_cost": Decimal(str(total_estimated_cost)),
+        "total_cache_hits": total_cache_hits_int,
+        "total_cache_misses": total_cache_misses_int,
+        "cache_hit_rate": cache_hit_rate,
+        "estimated_requests_saved": total_cache_hits_int,
     }

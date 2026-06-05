@@ -31,4 +31,5 @@ class AskResponse(BaseModel):
     output_tokens: int
     total_tokens: int
     estimated_cost: Decimal
+    cached: bool
     created_at: datetime

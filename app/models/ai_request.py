@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Integer, Numeric, Text, func
+from sqlalchemy import Boolean, DateTime, Integer, Numeric, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -19,6 +19,7 @@ class AIRequest(Base):
     output_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
     total_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
     estimated_cost: Mapped[Decimal] = mapped_column(Numeric(12, 6), nullable=False)
+    served_from_cache: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

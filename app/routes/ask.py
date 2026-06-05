@@ -33,6 +33,7 @@ def ask_question(payload: AskRequest, db: Session = Depends(get_db)) -> AskRespo
             output_tokens=ai_request.output_tokens,
             total_tokens=ai_request.total_tokens,
             estimated_cost=ai_request.estimated_cost,
+            cached=ai_request.served_from_cache,
             created_at=ai_request.created_at,
         )
     except InvalidGeminiApiKeyError as exc:
