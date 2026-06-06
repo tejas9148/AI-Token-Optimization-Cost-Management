@@ -14,7 +14,13 @@ class AIRequest(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    original_prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    optimized_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     response: Mapped[str] = mapped_column(Text, nullable=False)
+    original_input_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    optimized_input_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    tokens_saved: Mapped[int] = mapped_column(Integer, nullable=False)
+    savings_percentage: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
     input_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
     output_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
     total_tokens: Mapped[int] = mapped_column(Integer, nullable=False)

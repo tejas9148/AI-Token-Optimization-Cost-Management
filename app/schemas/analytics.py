@@ -15,3 +15,6 @@ class AnalyticsResponse(BaseModel):
     total_cache_misses: int
     cache_hit_rate: float
     estimated_requests_saved: int
+    total_tokens_saved: int
+    average_tokens_saved_per_request: float
+    average_savings_percentage: float

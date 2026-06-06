@@ -26,7 +26,13 @@ class AskResponse(BaseModel):
     success: bool
     id: int
     prompt: str
+    original_prompt: str
+    optimized_prompt: str
     response: str
+    original_tokens: int
+    optimized_tokens: int
+    tokens_saved: int
+    savings_percentage: float
     input_tokens: int
     output_tokens: int
     total_tokens: int

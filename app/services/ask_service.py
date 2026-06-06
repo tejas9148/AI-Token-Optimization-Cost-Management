@@ -8,7 +8,9 @@ from app.models.ai_request import AIRequest
 from app.repositories.ai_request_repository import create_ai_request
 from app.services.cache_service import CacheService, CacheUnavailableError
 from app.services.gemini_service import GeminiService
+from app.services.prompt_optimizer import PromptOptimizerService
 from app.utils.cost_utils import calculate_estimated_cost
+from app.utils.prompt_utils import calculate_token_savings
 from app.utils.token_utils import calculate_total_tokens
 
 
@@ -23,20 +25,32 @@ class AskService:
         """Handle a user prompt end-to-end and persist the request record."""
 
         cache_service = CacheService(settings=self.settings)
+        prompt_optimizer = PromptOptimizerService()
+        gemini_service = GeminiService(settings=self.settings)
+
+        optimization = prompt_optimizer.optimize(prompt)
+        original_prompt = optimization.original_prompt
+        optimized_prompt = optimization.optimized_prompt
+
+        original_input_tokens = gemini_service.count_tokens(original_prompt)
+        optimized_input_tokens = gemini_service.count_tokens(optimized_prompt)
+        tokens_saved, savings_percentage = calculate_token_savings(
+            original_input_tokens, optimized_input_tokens
+        )
+
         response_text = None
         served_from_cache = False
 
         try:
-            response_text = cache_service.get_cached_response(prompt)
+            response_text = cache_service.get_cached_response(optimized_prompt)
             served_from_cache = response_text is not None
         except CacheUnavailableError:
             response_text = None
 
         if response_text is None:
-            gemini_service = GeminiService(settings=self.settings)
-            response_text = gemini_service.generate_response(prompt)
+            response_text = gemini_service.generate_response(optimized_prompt)
 
-            input_tokens = gemini_service.count_tokens(prompt)
+            input_tokens = optimized_input_tokens
             output_tokens = gemini_service.count_tokens(response_text)
             total_tokens = calculate_total_tokens(input_tokens, output_tokens)
             estimated_cost = calculate_estimated_cost(
@@ -47,7 +61,7 @@ class AskService:
             )
 
             try:
-                cache_service.store_response(prompt, response_text)
+                cache_service.store_response(optimized_prompt, response_text)
             except CacheUnavailableError:
                 pass
         else:
@@ -58,8 +72,14 @@ class AskService:
 
         return create_ai_request(
             self.db,
-            prompt=prompt,
+            prompt=original_prompt,
+            original_prompt=original_prompt,
+            optimized_prompt=optimized_prompt,
             response=response_text,
+            original_input_tokens=original_input_tokens,
+            optimized_input_tokens=optimized_input_tokens,
+            tokens_saved=tokens_saved,
+            savings_percentage=savings_percentage,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             total_tokens=total_tokens,

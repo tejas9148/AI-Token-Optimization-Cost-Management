@@ -10,7 +10,13 @@ def create_ai_request(
     db: Session,
     *,
     prompt: str,
+    original_prompt: str,
+    optimized_prompt: str,
     response: str,
+    original_input_tokens: int,
+    optimized_input_tokens: int,
+    tokens_saved: int,
+    savings_percentage,
     input_tokens: int,
     output_tokens: int,
     total_tokens: int,
@@ -21,7 +27,13 @@ def create_ai_request(
 
     ai_request = AIRequest(
         prompt=prompt,
+        original_prompt=original_prompt,
+        optimized_prompt=optimized_prompt,
         response=response,
+        original_input_tokens=original_input_tokens,
+        optimized_input_tokens=optimized_input_tokens,
+        tokens_saved=tokens_saved,
+        savings_percentage=savings_percentage,
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=total_tokens,
@@ -55,7 +67,17 @@ def count_ai_requests(db: Session) -> int:
 def get_ai_request_analytics(db: Session) -> dict[str, int | Decimal | float]:
     """Return aggregate usage and cost metrics for stored AI requests."""
 
-    total_requests, total_input_tokens, total_output_tokens, total_tokens, total_estimated_cost, total_cache_hits = (
+    (
+        total_requests,
+        total_input_tokens,
+        total_output_tokens,
+        total_tokens,
+        total_estimated_cost,
+        total_cache_hits,
+        total_tokens_saved,
+        average_tokens_saved_per_request,
+        average_savings_percentage,
+    ) = (
         db.query(
             func.count(AIRequest.id),
             func.coalesce(func.sum(AIRequest.input_tokens), 0),
@@ -63,6 +85,9 @@ def get_ai_request_analytics(db: Session) -> dict[str, int | Decimal | float]:
             func.coalesce(func.sum(AIRequest.total_tokens), 0),
             func.coalesce(func.sum(AIRequest.estimated_cost), 0),
             func.coalesce(func.sum(func.cast(AIRequest.served_from_cache, Integer)), 0),
+            func.coalesce(func.sum(AIRequest.tokens_saved), 0),
+            func.coalesce(func.avg(AIRequest.tokens_saved), 0),
+            func.coalesce(func.avg(AIRequest.savings_percentage), 0),
         ).one()
     )
 
@@ -81,4 +106,7 @@ def get_ai_request_analytics(db: Session) -> dict[str, int | Decimal | float]:
         "total_cache_misses": total_cache_misses_int,
         "cache_hit_rate": cache_hit_rate,
         "estimated_requests_saved": total_cache_hits_int,
+        "total_tokens_saved": int(total_tokens_saved),
+        "average_tokens_saved_per_request": float(average_tokens_saved_per_request),
+        "average_savings_percentage": float(average_savings_percentage),
     }
