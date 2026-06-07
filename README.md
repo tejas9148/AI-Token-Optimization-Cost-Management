@@ -1,16 +1,19 @@
 # AI Token Optimization & Cost Management Platform
 
-Phase 3 extends the FastAPI-based AI Gateway with Redis caching so repeated prompts can be served without another Gemini call.
+Phase 5 adds conversation summarization and context compression so long-running chats can stay within token budgets while preserving important context.
 
 ## Features
 
 - POST `/ask` endpoint
+- POST `/chat` endpoint with conversation-aware context compression
+- GET `/conversations` and GET `/conversations/{id}`
 - Pydantic request validation
 - Dedicated Gemini service layer
 - Redis-backed prompt cache with TTL
 - Environment-based configuration
 - Structured error handling
 - Cache-aware analytics
+- Conversation summaries and compression analytics
 
 ## Project Structure
 
@@ -32,6 +35,7 @@ Phase 3 extends the FastAPI-based AI Gateway with Redis caching so repeated prom
    - Keep `GEMINI_MODEL=gemini-flash-lite-latest` as the free-tier-friendly default.
    - Set `DATABASE_URL`, `INPUT_COST_PER_MILLION_TOKENS`, and `OUTPUT_COST_PER_MILLION_TOKENS` there.
    - Set `REDIS_URL` and `CACHE_TTL_SECONDS` for cache behavior.
+   - Set `MAX_CONTEXT_TOKENS` and `SUMMARY_TRIGGER_TOKENS` for conversation compression.
 4. Set `GEMINI_API_KEY` in `.env`.
 5. Run the initial migration:
    ```bash
@@ -73,3 +77,11 @@ Phase 3 extends the FastAPI-based AI Gateway with Redis caching so repeated prom
 - Cache misses fall back to Gemini and store the response back in Redis.
 - Redis failures are treated as cache misses so the API remains available.
 - `/analytics` now reports cache hits, cache misses, hit rate, and estimated requests saved.
+
+## Conversation Compression Behavior
+
+- `/chat` stores each user and assistant turn with a `conversation_id`.
+- When a conversation grows beyond the summary trigger, older turns are summarized with Gemini.
+- Recent turns stay intact, and the summarized context is sent forward on later requests.
+- If summary generation fails, the request continues with the full context so users are never blocked.
+- `/analytics` also reports total context tokens saved, total summaries generated, and average compression percentage.

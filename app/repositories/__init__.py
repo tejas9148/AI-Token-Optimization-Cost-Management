@@ -1,3 +1,8 @@
 from app.repositories.ai_request_repository import create_ai_request
 from app.repositories.ai_request_repository import count_ai_requests, list_ai_requests
 from app.repositories.ai_request_repository import get_ai_request_analytics
+from app.repositories.conversation_repository import create_conversation
+from app.repositories.conversation_repository import create_conversation_message
+from app.repositories.conversation_repository import count_conversations, list_conversation_messages, list_conversations
+from app.repositories.conversation_repository import get_conversation, get_conversation_analytics
+from app.repositories.conversation_repository import update_conversation_summary

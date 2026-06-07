@@ -18,3 +18,6 @@ class AnalyticsResponse(BaseModel):
     total_tokens_saved: int
     average_tokens_saved_per_request: float
     average_savings_percentage: float
+    total_context_tokens_saved: int
+    total_summaries_generated: int
+    average_compression_percentage: float

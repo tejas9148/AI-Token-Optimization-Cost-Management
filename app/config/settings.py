@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     output_cost_per_million_tokens: float = 0.0
     redis_url: str = ""
     cache_ttl_seconds: int = 3600
+    max_context_tokens: int = 4096
+    summary_trigger_tokens: int = 3000
 
     model_config = SettingsConfigDict(
         env_file=".env",
