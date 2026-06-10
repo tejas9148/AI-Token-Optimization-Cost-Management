@@ -68,9 +68,32 @@ class ConversationService:
         compressed_context_tokens = self._count_tokens(compressed_context_text)
         if not used_summary:
             compressed_context_tokens = original_context_tokens
-
+            
+        
         gemini_service = GeminiService(settings=self.settings)
-        assistant_message = gemini_service.generate_response(compressed_context_text)
+
+        system_prompt = """
+You are TokenWise AI Assistant.
+
+Rules:
+- Always respond in plain text.
+- Do not use Markdown.
+- Do not use headings (#).
+- Do not use bullet points.
+- Do not use bold text (**).
+- Do not use italic text.
+- Do not use code blocks.
+- Write naturally in complete sentences and paragraphs.
+- Keep answers concise and professional.
+"""
+
+        final_prompt = f"""
+{system_prompt}
+
+{compressed_context_text}
+"""
+
+        assistant_message = gemini_service.generate_response(final_prompt)
         response_tokens = self._count_tokens(assistant_message)
         _ = calculate_total_tokens(compressed_context_tokens, response_tokens)
 
